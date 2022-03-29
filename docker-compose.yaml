@@ -1,6 +1,8 @@
 version: '3'
 
 services: 
+
+
   db: 
     image: mysql:5.7
     command: --innodb-use-native-aio=0
@@ -11,11 +13,34 @@ services:
       - ./mysql:/var/lib/mysql
     environment:
       - MYSQL_DATABASE=nodedb
-    
-  node:
-    image: node
-    volumes:
-     - ./app:/usr/src/app
+      - MYSQL_ROOT_PASSWORD=root
+    networks: 
+      - nodenet
+
+  nginx-reverse:
+    build:
+      context: nginx
+    container_name: nginx-reverse
+    networks: 
+      - nodenet
+    ports:
+      - "8080:80"
+    depends_on:
+      - db
+
+  nodeapp:
+    build:
+      context: app
+    container_name: nodeapp
+    networks: 
+      - nodenet
+    volumes: 
+      - ./app:/usr/src/app
+    tty: true
+    ports:
+      - "3000:3000"
+    depends_on:
+      - nginx-reverse
 
 networks: 
   nodenet:
